@@ -107,7 +107,7 @@ var imageList = [
 var Item = function() {
     // Call parental constructor.
     // Assign random item image and postiion
-    var type = Date.now() % 7;
+    var type = Date.now() % imageList.length;
     var sprite = imageList[type];
     var x = Math.floor(Math.random() * col) * b_width;
     var y = 48 + Math.floor(Math.random() * row) * b_height;
@@ -119,7 +119,7 @@ Item.prototype = Object.create(FroggerObj.prototype);
 
 // Move item to another location and change item type
 Item.prototype.reset = function(seed) {
-    var type = Date.now() * (seed + 1) % 7;
+    var type = Date.now() * (seed + 1) % imageList.length;
     this.sprite = imageList[type];
     this.y = 48 + (Date.now() * (seed + 1) % row) * b_height;
     this.x = (Date.now() * (seed + 1) % col) * b_width;
@@ -353,8 +353,8 @@ for (var enemy = 0; enemy < numEnemies; enemy++) {
     newEnemy.reset();
     allEnemies[enemy] = newEnemy;
     counter++;
-    if (counter == 3)
-        counter = Math.floor(Math.random() * 3);
+    if (counter == row)
+        counter = Math.floor(Math.random() * row);
 }
 
 

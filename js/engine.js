@@ -24,9 +24,9 @@ var Engine = (function(global) {
         ctx = canvas.getContext('2d'),
         lastTime;
 		
-	var o_width = 69,
-	o_height = 73,
-	e_height = 54;
+	var o_width = 69, // object's width
+	o_height = 73, // object's height
+	e_height = 54; // enemy's height
 
     canvas.width = 505;
     canvas.height = 606;
