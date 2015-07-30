@@ -1,8 +1,16 @@
+/* app.js
+ * Written by	: Mellisa Octaviani
+ * Created on	: 26 July 2015
+ *
+ * This file provides the game objects and game logic function
+ * such as update, reset, render, as well as handling key input.
+ * This script also handles all object instantiation.
+ */
+'use strict';
 var score = 0;
-var onGame = true;
-var pause = false;
 var barrierTime = 3;
 var selectedCharacter = 0;
+var state = 'onPreStart';
 
 //************************************Start of enemy************************************
 
@@ -36,7 +44,7 @@ Enemy.prototype.update = function(dt) {
             }
         }
     } else {
-        this.reset();
+        this.reset(); // enemy will be reset back to starting point after reaching right border.
     }
 };
 
@@ -53,10 +61,12 @@ Enemy.prototype.render = function() {
 
 //************************************End of enemy************************************
 //************************************Start of item************************************
+
+// imageList variable will stores image paths to 7 types of items to be collected
 var imageList = [
-    'images/Gem Blue.png',
-    'images/Gem Orange.png',
-    'images/Gem Green.png',
+    'images/gem-blue.png',
+    'images/gem-orange.png',
+    'images/gem-green.png',
     'images/Heart.png',
     'images/Key.png',
     'images/Star.png',
@@ -93,6 +103,7 @@ var Barrier = function() {
 };
 
 // Only display barrier at specific time for specific period
+// otherwise hide the barrier
 Barrier.prototype.update = function() {
     if (Math.floor((Date.now() / 10000) % 10) == barrierTime) {
         if (this.x == -100) {
@@ -118,7 +129,7 @@ Barrier.prototype.reset = function() {
 
 //************************************Start of player************************************
 
-
+// gameCharacters stores collection of game Character selection.
 var gameCharacters = ['images/char-boy.png',
     'images/char-cat-girl.png',
     'images/char-horn-girl.png',
@@ -153,6 +164,7 @@ Player.prototype.update = function(cmd) {
     else if (cmd === 'up' && this.y === topBorder) {
         this.reset();
         score--;
+        updateScore();
     } else if (cmd === 'down' && this.y < bottomBorder)
         this.y = this.y + 83;
 
@@ -180,17 +192,19 @@ Player.prototype.render = function() {
 // If there is any input while the game is on then update player 
 // If the game is not on then input is for start menu or game over screen
 Player.prototype.handleInput = function(cmd) {
-    if (onGame) {
-        if (!pause) {
-            this.update(cmd);
-        }
-        if (cmd == 'pause')
-            pause = !pause;
-    } else {
-        selectGameMenu(cmd);
+    if (state == "onPlay")
+        if (cmd == "pause")
+            state = "onPause"; //control of pausing the game
+        else
+            this.update(cmd); // control for main game
+    else if (state == "onPause" && cmd == 'pause')
+        state = "onPlay"; // control of unpausing the game
+    else if (state == "onPreStart" || state == "onGameOver") {
+        selectGameMenu(cmd); // control for game menu
     }
 };
 
+// This function resets player to start position.
 Player.prototype.reset = function() {
     this.y = 380;
     this.x = 202;
@@ -207,12 +221,21 @@ function selectGameMenu(cmd) {
     } else if (cmd == 'left' && selectedCharacter > 0) {
         selectedCharacter -= 1;
         redraw();
-    } else if (cmd == 'enter' || cmd == 'yes') {
-        player.sprite = gameCharacters[selectedCharacter];
-        onGame = !onGame;
+    } else if (cmd == 'yes' || cmd == 'enter') {
+        player.sprite = gameCharacters[selectedCharacter]; //select game character and start game
+        state = "onPlay";
         redraw();
     } else if (cmd == 'start') {
-        redraw();
+        state = "onPreStart";
+        redraw(); // to start 'menu' UI
+    }
+}
+
+// This function is to check if game is over
+function updateScore() {
+    if (score < 0) {
+        state = 'onGameOver';
+        score = 0;
     }
 }
 
@@ -225,38 +248,38 @@ function clear(c) {
 //clears the canvas and draws start Menu if required
 function redraw() {
     clear(ctx);
-    if (!onGame)
+    if (state == "onPreStart")
         drawStartMenu();
 }
 
 function drawStartMenu() {
     // draw background
-	ctx.fillStyle = '#f93';
+    ctx.fillStyle = '#f93';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.stroke();
-	
-	//draw instruction
+
+    //draw instruction
     ctx.font = '25pt Impact';
     ctx.textAlign = 'center';
     ctx.lineWidth = 3;
     ctx.fillStyle = 'white';
     ctx.fillText("Select your character", canvas.width / 2 - 10, 100);
     ctx.fillText("Press Enter / Y to start", canvas.width / 2 - 10, 300);
-	
-	//draw rectangle
+
+    //draw rectangle
     ctx.fillStyle = '#ffff99';
     ctx.fillRect(selectedCharacter * 101, 130, 101, 101);
     ctx.stroke();
     ctx.strokeStyle = 'yellow';
     ctx.rect(selectedCharacter * 101, 130, 101, 101);
     ctx.stroke();
-	
-	//draw game characters
+
+    //draw game characters
     for (var i = 0; i < gameCharacters.length; i++) {
         ctx.drawImage(Resources.get(gameCharacters[i]), i * 101, 83);
     }
-	
-	//draw footer
+
+    //draw footer
     ctx.fillStyle = 'white';
     ctx.font = '10pt Serif';
     ctx.lineWidth = 1;
@@ -266,7 +289,9 @@ function drawStartMenu() {
 
 // This section is to instantiate all objects
 
-//
+// All item objects is in an array called allItems
+// which will be positioned in one of three row of stones.
+
 var allItems = [];
 var numItems = 2;
 
@@ -276,6 +301,9 @@ for (var item = 0; item < numItems; item++) {
     newItem.x = Math.floor(Math.random() * 5) * 101;
     allItems[item] = newItem;
 }
+
+// All barrier objects is in an array called allBarrier
+// which will be positioned in one of three row of stones.
 
 var allBarrier = [];
 var numBarrier = 1;

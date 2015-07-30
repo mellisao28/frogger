@@ -1,3 +1,8 @@
 body {
     text-align: center;
 }
+
+.pause {
+	font: 26px/1em "serif";
+	color: #f5a623;
+}

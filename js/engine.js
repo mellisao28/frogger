@@ -44,12 +44,15 @@ var Engine = (function(global) {
 
         /* Call update/render functions, pass along the time delta to
          * update function since it may be used for smooth animation.
-		 * only update and render when game is on or not in pause mode.
+         * only update and render when game is on or not in pause mode.
          */
-        if (onGame && !pause) {
+        if (state == 'onPlay')
             update(dt);
+        if (state == 'onPlay' || state == "onGameOver")
             render();
-        }
+
+
+
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -74,24 +77,36 @@ var Engine = (function(global) {
     }
 
     /* This function is called by main (game loop) and itself calls all
-     * of the functions which may need to update entity's data, score, check collision, and item collection
+     * of the functions which may need to update entity's data, check collision, and item collection
      */
     function update(dt) {
         updateEntities(dt);
-        updateScore();
-        checkCollisions();
+        checkEnemyCollision();
         checkCollection();
+    }
+
+    /* This function is called by the checkEnemyCollision and checkCollection functions and 
+    used to detect collision between 2 given objects.
+    */
+    function checkCollisions(x1, y1, w1, h1, x2, y2, w2, h2) {
+        if (x1 < x2 + w2 &&
+            x1 + w1 > x2 &&
+            y1 < y2 + h2 &&
+            h1 + y1 > y2)
+            return true;
+        return false;
     }
 
     /* This function is called by the update function and 
     used to detect collision between player and enemy. 
     If collision is detected then player is reset back and score is deducted.
     */
-    function checkCollisions() {
+    function checkEnemyCollision() {
         allEnemies.forEach(function(enemy) {
-            if (Math.abs(player.x - enemy.x) < 80 && enemy.y == player.y) {
+            if (checkCollisions(player.x, player.y, 69, 73, enemy.x, enemy.y, 69, 54)) {
                 player.reset();
-				score--;
+                score--;
+                updateScore();
             }
         });
     }
@@ -102,9 +117,9 @@ var Engine = (function(global) {
     */
     function checkCollection() {
         for (var i = 0; i < allItems.length; i++) {
-            if (player.x == allItems[i].x && allItems[i].y == player.y) {
+            if (checkCollisions(player.x, player.y, 69, 73, allItems[i].x, allItems[i].y, 69, 73)) {
                 allItems[i].reset(i);
-				score++;
+                score++;
             }
         }
     }
@@ -123,13 +138,7 @@ var Engine = (function(global) {
         });
     }
 
-	// This function is to check if game is over
-    function updateScore() {
-        if (score < 0) {
-            onGame = false;
-            score = 0;
-        }
-    }
+
 
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
@@ -172,7 +181,12 @@ var Engine = (function(global) {
 
         renderEntities();
 
-        renderScore();
+        if (state == "onPlay")
+            renderScore();
+
+        if (state == "onGameOver")
+            renderGameOver();
+
     }
 
     /* This function is called by the render function and is called on each game
@@ -205,16 +219,14 @@ var Engine = (function(global) {
         player.render();
     }
 
-	// This function is to show score result or to show game over screen
+    // This function is to show score result or to show game over screen
     function renderScore() {
-        if (onGame) {
-            ctx.font = '25pt Impact';
-            ctx.textAlign = 'center';
-            ctx.lineWidth = 3;
-            ctx.fillStyle = 'white';
-            ctx.fillText("SCORE: " + score, 400, 100);
-        } else
-            renderGameOver();
+        ctx.font = '25pt Impact';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.fillStyle = 'white';
+        ctx.fillText("SCORE: " + score, 400, 100);
+
     }
 
     //This function handle a game over screen
@@ -234,7 +246,7 @@ var Engine = (function(global) {
      */
     function reset() {
         score = 0;
-        onGame = false;
+        state = 'onPreStart';
         selectedCharacter = 0;
         redraw();
     }
@@ -253,9 +265,9 @@ var Engine = (function(global) {
         'images/char-horn-girl.png',
         'images/char-pink-girl.png',
         'images/char-princess-girl.png',
-        'images/Gem Blue.png',
-        'images/Gem Green.png',
-        'images/Gem Orange.png',
+        'images/gem-blue.png',
+        'images/gem-orange.png',
+        'images/gem-green.png',
         'images/Heart.png',
         'images/Key.png',
         'images/Star.png',
