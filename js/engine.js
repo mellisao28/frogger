@@ -23,6 +23,10 @@ var Engine = (function(global) {
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         lastTime;
+		
+	var o_width = 69,
+	o_height = 73,
+	e_height = 54;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -103,7 +107,7 @@ var Engine = (function(global) {
     */
     function checkEnemyCollision() {
         allEnemies.forEach(function(enemy) {
-            if (checkCollisions(player.x, player.y, 69, 73, enemy.x, enemy.y, 69, 54)) {
+            if (checkCollisions(player.x, player.y, o_width, o_height, enemy.x, enemy.y, o_width, e_height)) {
                 player.reset();
                 score--;
                 updateScore();
@@ -117,7 +121,7 @@ var Engine = (function(global) {
     */
     function checkCollection() {
         for (var i = 0; i < allItems.length; i++) {
-            if (checkCollisions(player.x, player.y, 69, 73, allItems[i].x, allItems[i].y, 69, 73)) {
+            if (checkCollisions(player.x, player.y, o_width , o_height, allItems[i].x, allItems[i].y, o_width, o_height)) {
                 allItems[i].reset(i);
                 score++;
             }

@@ -11,18 +11,53 @@ var score = 0;
 var barrierTime = 3;
 var selectedCharacter = 0;
 var state = 'onPreStart';
+const b_width = 101, //block width
+    b_height = 83, //block height
+    col = 5, //number of column
+    row = 3, //number of row
+    numItems = 2, // number of item
+    numBarrier = 1, //number of barrier
+    numEnemies = 3; // number of enemies
 
-//************************************Start of enemy************************************
+//************************************Start of Frogger Object********************************
+
+var FroggerObj = function(sprite, x, y) {
+    this.sprite = sprite;
+    this.x = x;
+    this.y = y;
+};
+
+FroggerObj.prototype.reset = function() {
+    this.x = 0;
+    this.speed = 0;
+};
+
+// Draw the object on the screen, required method for game
+FroggerObj.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+//************************************End of Frogger Object********************************
+
+//************************************Start of Enemy Object********************************
 
 // Enemies our player must avoid
-var Enemy = function() {
+var Enemy = function(enemy_y) {
+    // Call parental constructor.
+    // Assign random item image and postiion
 
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
-    this.sprite = 'images/enemy-bug.png';
-    this.reset();
-    this.y = 48;
+    var sprite = 'images/enemy-bug.png';
+    var x = -b_height;
+    FroggerObj.call(this, sprite, x, enemy_y);
 };
+
+// Prototypes are chained.
+Enemy.prototype = Object.create(FroggerObj.prototype);
+
+// You can change the constructor. 
+Enemy.prototype.constructor = Enemy;
 
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
@@ -33,7 +68,7 @@ Enemy.prototype.update = function(dt) {
 	 */
     var rightBorder = 402;
 
-    if (this.x < rightBorder + 101) {
+    if (this.x < rightBorder + b_width) {
         this.x = this.x + (this.speed * dt * 30);
         if (Math.floor((Date.now() / 10000) % 10) == barrierTime) {
             // if there is barrier enemy cannot move pass barrier.
@@ -50,14 +85,10 @@ Enemy.prototype.update = function(dt) {
 
 // Enemy is reset to starting point
 Enemy.prototype.reset = function() {
-    this.x = -83;
-    this.speed = Math.floor((Math.random() * 5) + 3);
+    this.x = -b_height;
+    this.speed = Math.floor((Math.random() * 5) + 3); // random number between 3-7
 };
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
 
 //************************************End of enemy************************************
 //************************************Start of item************************************
@@ -73,50 +104,52 @@ var imageList = [
     'images/Selector.png'
 ];
 
-// Assign random item image and postiion
 var Item = function() {
+    // Call parental constructor.
+    // Assign random item image and postiion
     var type = Date.now() % 7;
-    this.sprite = imageList[type];
-    this.x = 0;
-    this.y = 0;
+    var sprite = imageList[type];
+    var x = Math.floor(Math.random() * col) * b_width;
+    var y = 48 + Math.floor(Math.random() * row) * b_height;
+    FroggerObj.call(this, sprite, x, y);
 };
 
-Item.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
+// Prototypes are chained.
+Item.prototype = Object.create(FroggerObj.prototype);
 
 // Move item to another location and change item type
 Item.prototype.reset = function(seed) {
     var type = Date.now() * (seed + 1) % 7;
     this.sprite = imageList[type];
-    this.y = 48 + (Date.now() * (seed + 1) % 3) * 83;
-    this.x = (Date.now() * (seed + 1) % 5) * 101;
+    this.y = 48 + (Date.now() * (seed + 1) % row) * b_height;
+    this.x = (Date.now() * (seed + 1) % col) * b_width;
 };
 
 //************************************End of item************************************
 //************************************Start of barrier************************************
 
-var Barrier = function() {
-    this.sprite = 'images/Rock.png';
-    this.x = 0;
-    this.y = 0;
+var Barrier = function(sprite, x, y) {
+    // Call parental constructor.
+    sprite = 'images/Rock.png';
+    x = Math.floor(Math.random() * col) * b_width;
+    y = 48 + Math.floor(Math.random() * row) * b_height;
+    FroggerObj.call(this, sprite, x, y);
 };
+
+// Prototypes are chained.
+Barrier.prototype = Object.create(FroggerObj.prototype);
 
 // Only display barrier at specific time for specific period
 // otherwise hide the barrier
 Barrier.prototype.update = function() {
     if (Math.floor((Date.now() / 10000) % 10) == barrierTime) {
         if (this.x == -100) {
-            this.y = 48 + (Date.now() % 3) * 83;
-            this.x = (Date.now() % 5) * 101;
+            this.y = 48 + (Date.now() % row) * b_height;
+            this.x = (Date.now() % col) * b_width;
         }
     } else {
         this.reset();
     }
-};
-
-Barrier.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 // hide barrier
@@ -137,15 +170,19 @@ var gameCharacters = ['images/char-boy.png',
     'images/char-princess-girl.png'
 ];
 
-
 // Player class requires an update(), render() and
 // a handleInput() method.
+
 var Player = function() {
-    this.sprite = gameCharacters[selectedCharacter];
-    this.x = 202;
-    this.y = 380;
-    this.speed = 0;
+    // Call parental constructor.
+    var sprite = gameCharacters[selectedCharacter];
+    var x = 202;
+    var y = 380;
+    FroggerObj.call(this, sprite, x, y);
 };
+
+// Prototypes are chained.
+Player.prototype = Object.create(FroggerObj.prototype);
 
 // Player update function is only called when there is key input
 Player.prototype.update = function(cmd) {
@@ -156,37 +193,31 @@ Player.prototype.update = function(cmd) {
 
     // to change position based on key input. If there is barrier then player cannot go pass barrier
     if (cmd === 'left' && this.x > leftBorder)
-        this.x = this.x - 101;
+        this.x = this.x - b_width;
     else if (cmd === 'right' && this.x < rightBorder)
-        this.x = this.x + 101;
+        this.x = this.x + b_width;
     else if (cmd === 'up' && this.y > topBorder)
-        this.y = this.y - 83;
+        this.y = this.y - b_height;
     else if (cmd === 'up' && this.y === topBorder) {
         this.reset();
         score--;
         updateScore();
     } else if (cmd === 'down' && this.y < bottomBorder)
-        this.y = this.y + 83;
+        this.y = this.y + b_height;
 
     for (var i = 0; i < allBarrier.length; i++) {
         if (player.x == allBarrier[i].x && allBarrier[i].y == player.y) {
             if (cmd == 'left')
-                this.x = this.x + 101;
+                this.x = this.x + b_width;
             else if (cmd == 'up')
-                this.y = this.y + 83;
+                this.y = this.y + b_height;
             else if (cmd == 'down')
-                this.y = this.y - 83;
+                this.y = this.y - b_height;
             else if (cmd == 'right')
-                this.x = this.x - 101;
-
+                this.x = this.x - b_width;
         }
     }
 
-};
-
-// Draw the player on the screen, required method for game
-Player.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 // If there is any input while the game is on then update player 
@@ -215,7 +246,7 @@ Player.prototype.reset = function() {
 //************************************Start of function************************************
 // To navigate game character start menu
 function selectGameMenu(cmd) {
-    if (cmd == 'right' && selectedCharacter < 4) {
+    if (cmd == 'right' && selectedCharacter < gameCharacters.length - 1) {
         selectedCharacter += 1;
         redraw();
     } else if (cmd == 'left' && selectedCharacter > 0) {
@@ -268,15 +299,15 @@ function drawStartMenu() {
 
     //draw rectangle
     ctx.fillStyle = '#ffff99';
-    ctx.fillRect(selectedCharacter * 101, 130, 101, 101);
+    ctx.fillRect(selectedCharacter * b_width, 130, b_width, b_width);
     ctx.stroke();
     ctx.strokeStyle = 'yellow';
-    ctx.rect(selectedCharacter * 101, 130, 101, 101);
+    ctx.rect(selectedCharacter * b_width, 130, b_width, b_width);
     ctx.stroke();
 
     //draw game characters
     for (var i = 0; i < gameCharacters.length; i++) {
-        ctx.drawImage(Resources.get(gameCharacters[i]), i * 101, 83);
+        ctx.drawImage(Resources.get(gameCharacters[i]), i * b_width, b_height);
     }
 
     //draw footer
@@ -293,39 +324,33 @@ function drawStartMenu() {
 // which will be positioned in one of three row of stones.
 
 var allItems = [];
-var numItems = 2;
 
 for (var item = 0; item < numItems; item++) {
     var newItem = new Item();
-    newItem.y = 48 + Math.floor(Math.random() * 3) * 83;
-    newItem.x = Math.floor(Math.random() * 5) * 101;
     allItems[item] = newItem;
 }
+
 
 // All barrier objects is in an array called allBarrier
 // which will be positioned in one of three row of stones.
 
 var allBarrier = [];
-var numBarrier = 1;
 
 for (var barrier = 0; barrier < numBarrier; barrier++) {
     var newBarrier = new Barrier();
-    newBarrier.y = 48 + Math.floor(Math.random() * 3) * 83;
-    newBarrier.x = Math.floor(Math.random() * 5) * 101;
     allBarrier[barrier] = newBarrier;
 }
-
 
 // All enemy objects is in an array called allEnemies
 // which will be positioned in one of three row of stones.
 
 var allEnemies = [];
-var numEnemies = 3;
 var counter = 0;
 
 for (var enemy = 0; enemy < numEnemies; enemy++) {
-    var newEnemy = new Enemy();
-    newEnemy.y = 48 + (counter * 83);
+    var y = 48 + (counter * b_height);
+    var newEnemy = new Enemy(y);
+    newEnemy.reset();
     allEnemies[enemy] = newEnemy;
     counter++;
     if (counter == 3)
@@ -335,7 +360,6 @@ for (var enemy = 0; enemy < numEnemies; enemy++) {
 
 // Place the player object in a variable called player
 var player = new Player();
-
 
 // This listens for key presses and sends the keys to
 // Player.handleInput() method. 
