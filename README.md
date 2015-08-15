@@ -3,7 +3,7 @@ Frogger Game
 
 How to run
 -----------
-Click on index.html or visit my GitHub page (https://rawgit.com/mellisao28/frogger/master/index.html) and enjoy the app.
+Click on index.html or visit my GitHub page (http://mellisao28.github.io/frogger) and enjoy the app.
 
 How to play
 ------------
